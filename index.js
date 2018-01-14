@@ -4,6 +4,10 @@ const login = require('./service/login');
 const publisher = require('./service/publish');
 const nconf = require('nconf');
 const path = require('path');
+const chromeConfig = {
+	// headless: false,
+	args: ['--no-sandbox', '--disable-setuid-sandbox']
+}
 
 function init(pathToConfig) {
   nconf.argv()
@@ -22,10 +26,10 @@ function init(pathToConfig) {
  * @param {Array<String>} pictures pictures to publish
  */
 function* publish(text, pictures) {
-  const browser = yield puppeteer.launch();
+  const browser = yield puppeteer.launch(chromeConfig);
   const page = yield browser.newPage();
   yield page.setViewport({
-    width: 1920,
+    width: 1280,
     height: 1080,
     deviceScaleFactor: 1
   });
