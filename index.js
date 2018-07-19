@@ -5,8 +5,8 @@ const publisher = require('./service/publish');
 const nconf = require('nconf');
 const path = require('path');
 const chromeConfig = {
-	// headless: false,
-	args: ['--no-sandbox', '--disable-setuid-sandbox']
+  headless: false,
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
 }
 
 function init(pathToConfig) {
@@ -29,7 +29,7 @@ function* publish(text, pictures) {
   const browser = yield puppeteer.launch(chromeConfig);
   const page = yield browser.newPage();
   yield page.setViewport({
-    width: 1280,
+    width: 1000,
     height: 1080,
     deviceScaleFactor: 1
   });
@@ -38,6 +38,7 @@ function* publish(text, pictures) {
     yield co(login(page));
   } catch (e) {
     console.log('登录失败！');
+    yield page.close();
   }
 
   try {
