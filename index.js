@@ -1,11 +1,10 @@
 const puppeteer = require('puppeteer');
-const co = require('co');
 const login = require('./service/login');
 const publisher = require('./service/publish');
 const nconf = require('nconf');
 const path = require('path');
 const chromeConfig = {
-  headless: false,
+  // headless: false,
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 }
 
@@ -16,7 +15,7 @@ function init(pathToConfig) {
     nconf.file(pathToConfig);
   }
   return {
-    publish: (...args) => {return co(publish(...args))}
+    publish: (...args) => {return publish(...args)}
   }
 }
 
@@ -25,31 +24,40 @@ function init(pathToConfig) {
  * @param {String} text 
  * @param {Array<String>} pictures pictures to publish
  */
-function* publish(text, pictures) {
-  const browser = yield puppeteer.launch(chromeConfig);
-  const page = yield browser.newPage();
-  yield page.setViewport({
+async function publish(text, pictures) {
+  const browser = await puppeteer.launch(chromeConfig);
+  const page = await browser.newPage();
+  await page.setViewport({
     width: 1000,
     height: 1080,
     deviceScaleFactor: 1
   });
+  await page.setRequestInterception(true);
+  page.on('request', req => {
+    const whitelist = ['document', 'script', 'xhr', 'fetch', 'image', 'stylesheet'];
+    if (!whitelist.includes(req.resourceType())) {
+      return req.abort();
+    }
+    req.continue();
+  });
   try {
     console.log('开始登陆...');
-    yield co(login(page));
+    await login(page);
   } catch (e) {
-    console.log('登录失败！');
-    yield page.close();
+    console.log(e);
+    throw new Error('登录失败！');
   }
 
   try {
     console.log('开始发送...');
-    yield co(publisher(page, text, pictures));
+    await publisher(page, text, pictures);
+    console.log('发送成功！');
   } catch (e) {
     console.log(e);
     throw new Error('发布失败！');
   }
-  console.log('发送成功！');
-  yield page.close();
+  await page.close();
+  await browser.close();
 }
 
 module.exports = {
