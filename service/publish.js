@@ -10,8 +10,8 @@ async function publish(page, text, pictures) {
   await page.goto('http://weibo.com');
   await page.waitForSelector('#skin_cover_s', {visible: true});
   if (pictures.length) {
+    console.log('上传图片', pictures[0])
     await page.click('a[title="图片"]');
-    console.log('上传图片')
     const fileInput = await page.$('input[multiple]');
     await fileInput.uploadFile(...pictures);
     await page.waitFor(pictures.length * 1000);
